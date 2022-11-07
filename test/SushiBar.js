@@ -31,33 +31,16 @@ describe("SushiBar", function () {
     expect(await this.bar.balanceOf(this.alice.address)).to.equal("100")
   })
 
-  it("should not allow withraw more than what you have", async function () {
+  it("should not allow withdraw more than staked", async function () {
     await this.sushi.approve(this.bar.address, "100")
     await this.bar.enter("100")
-    await expect(this.bar.leave("200")).to.be.revertedWith("ERC20: burn amount exceeds balance")
+    await expect(this.bar.leave("200")).to.be.revertedWith("Insufficient xSUSHI")
   })
 
-  it("should work with more than one participant", async function () {
+  it("should not allow withdraw before 2 days", async function () {
     await this.sushi.approve(this.bar.address, "100")
-    await this.sushi.connect(this.bob).approve(this.bar.address, "100", { from: this.bob.address })
-    // Alice enters and gets 20 shares. Bob enters and gets 10 shares.
-    await this.bar.enter("20")
-    await this.bar.connect(this.bob).enter("10", { from: this.bob.address })
-    expect(await this.bar.balanceOf(this.alice.address)).to.equal("20")
-    expect(await this.bar.balanceOf(this.bob.address)).to.equal("10")
-    expect(await this.sushi.balanceOf(this.bar.address)).to.equal("30")
-    // SushiBar get 20 more SUSHIs from an external source.
-    await this.sushi.connect(this.carol).transfer(this.bar.address, "20", { from: this.carol.address })
-    // Alice deposits 10 more SUSHIs. She should receive 10*30/50 = 6 shares.
-    await this.bar.enter("10")
-    expect(await this.bar.balanceOf(this.alice.address)).to.equal("26")
-    expect(await this.bar.balanceOf(this.bob.address)).to.equal("10")
-    // Bob withdraws 5 shares. He should receive 5*60/36 = 8 shares
-    await this.bar.connect(this.bob).leave("5", { from: this.bob.address })
-    expect(await this.bar.balanceOf(this.alice.address)).to.equal("26")
-    expect(await this.bar.balanceOf(this.bob.address)).to.equal("5")
-    expect(await this.sushi.balanceOf(this.bar.address)).to.equal("52")
-    expect(await this.sushi.balanceOf(this.alice.address)).to.equal("70")
-    expect(await this.sushi.balanceOf(this.bob.address)).to.equal("98")
+    await this.bar.enter("100")
+    await expect(this.bar.leave("80")).to.be.revertedWith("Cannot be unstacked before 2 days")
   })
+
 })
